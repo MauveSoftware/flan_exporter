@@ -28,6 +28,7 @@ type collector struct {
 	dataSource datasource.DataSource
 }
 
+// Describe implements prometheus.Collector interface
 func (m *collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- reportAgeDesc
 	ch <- hostsUpCountDesc
@@ -35,6 +36,7 @@ func (m *collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- vulnsDesc
 }
 
+// Collect implements prometheus.Collector interface
 func (m *collector) Collect(ch chan<- prometheus.Metric) {
 	r, err := m.dataSource.NewestReport()
 	if err != nil {

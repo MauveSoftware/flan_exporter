@@ -6,18 +6,26 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/MauveSoftware/flan_exporter/datasource/filesystem"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+
+	"github.com/MauveSoftware/flan_exporter/datasource"
+	"github.com/MauveSoftware/flan_exporter/datasource/filesystem"
+	"github.com/MauveSoftware/flan_exporter/datasource/gcloud"
 )
 
 const version string = "0.1.0"
 
 var (
-	showVersion   = flag.Bool("version", false, "Print version information.")
-	listenAddress = flag.String("web.listen-address", ":9999", "Address on which to expose metrics and web interface.")
-	metricsPath   = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
+	showVersion           = flag.Bool("version", false, "Print version information.")
+	listenAddress         = flag.String("web.listen-address", ":9711", "Address on which to expose metrics and web interface.")
+	metricsPath           = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
+	dataSourceProvider    = flag.String("datasource.provider", "fs", "Data source provider (gcloud for Google Cloud Storage or fs for local filesystem)")
+	fsPath                = flag.String("datasource.fs.report-path", "", "Path to report files")
+	gcloudCredentialsFile = flag.String("datasource.gcloud.credentials-path", "", "Path to Google Cloud Credentials JSON file")
+	gcloudBucketName      = flag.String("datasource.gcloud.bucket-name", "flan-reports", "Name ")
 )
 
 func main() {
@@ -40,7 +48,10 @@ func printVersion() {
 }
 
 func startServer() {
-	ds := filesystem.New("/Users/daniel/xml_files")
+	ds, err := datasourceProvider()
+	if err != nil {
+		panic(err)
+	}
 
 	logrus.Infof("Starting Cloudflare Flan Scan exporter (Version: %s)", version)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -62,4 +73,15 @@ func startServer() {
 
 	logrus.Infof("Listening for %s on %s", *metricsPath, *listenAddress)
 	logrus.Fatal(http.ListenAndServe(*listenAddress, nil))
+}
+
+func datasourceProvider() (datasource.DataSource, error) {
+	switch *dataSourceProvider {
+	case "fs":
+		return filesystem.New(*fsPath), nil
+	case "gcloud":
+		return gcloud.New(*gcloudBucketName, *gcloudCredentialsFile)
+	default:
+		return nil, errors.Errorf("data source is unknown")
+	}
 }
