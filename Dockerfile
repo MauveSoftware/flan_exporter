@@ -11,4 +11,4 @@ ENV FLAN_FS_PATH "/reports"
 ENV FLAN_GCLOUD_CREDENTIAL_FILE "/app/gcloud_credentials.json"
 ENV FLAN_GCLOUD_BUCKET_NAME "mauve-flan"
 EXPOSE 9711
-ENTRYPOINT /app/flan_exporter datasource.provider -datasource.provider=$FLAN_DATASOURCE -datasource.fs.report-path=$FLAN_FS_PATH -datasource.gcloud.credentials-path=$FLAN_GCLOUD_CREDENTIAL_FILE -datasource.gcloud.bucket-name=$FLAN_GCLOUD_BUCKET_NAME
+ENTRYPOINT /app/flan_exporter -datasource.provider=$FLAN_DATASOURCE -datasource.fs.report-path=$FLAN_FS_PATH -datasource.gcloud.credentials-path=$FLAN_GCLOUD_CREDENTIAL_FILE -datasource.gcloud.bucket-name=$FLAN_GCLOUD_BUCKET_NAME
