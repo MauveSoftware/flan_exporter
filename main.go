@@ -16,7 +16,7 @@ import (
 	"github.com/MauveSoftware/flan_exporter/datasource/gcloud"
 )
 
-const version string = "0.1.1"
+const version string = "0.1.2"
 
 var (
 	showVersion           = flag.Bool("version", false, "Print version information.")

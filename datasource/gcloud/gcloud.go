@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"strings"
+	"sync"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -14,9 +15,11 @@ import (
 )
 
 type gcloudDataSource struct {
-	client     *storage.Client
-	bucketName string
-	ctx        context.Context
+	client      *storage.Client
+	bucketName  string
+	ctx         context.Context
+	cached      *datasource.Report
+	cachedMutex sync.Mutex
 }
 
 // New returns a datasource implementation using Google Cloud Storage
@@ -84,15 +87,20 @@ func (d *gcloudDataSource) newestReportFromObjects(bucket *storage.BucketHandle,
 		}
 	}
 
-	files, err := d.reportFiles(bucket, reports[newestKey])
+	d.cachedMutex.Lock()
+	defer d.cachedMutex.Unlock()
+
+	if d.cached != nil && d.cached.Date == newestDate {
+		return d.cached, nil
+	}
+
+	r, err := d.reportFromObjects(newestDate, bucket, reports[newestKey])
 	if err != nil {
 		return nil, err
 	}
+	d.cached = r
 
-	return &datasource.Report{
-		Date:  newestDate,
-		Files: files,
-	}, nil
+	return r, nil
 }
 
 func (d *gcloudDataSource) reportMap(objs []*storage.ObjectAttrs) map[string][]*storage.ObjectAttrs {
@@ -106,6 +114,18 @@ func (d *gcloudDataSource) reportMap(objs []*storage.ObjectAttrs) map[string][]*
 	}
 
 	return reports
+}
+
+func (d *gcloudDataSource) reportFromObjects(reportDate time.Time, bucket *storage.BucketHandle, objs []*storage.ObjectAttrs) (*datasource.Report, error) {
+	files, err := d.reportFiles(bucket, objs)
+	if err != nil {
+		return nil, err
+	}
+
+	return &datasource.Report{
+		Date:  reportDate,
+		Files: files,
+	}, nil
 }
 
 func (d *gcloudDataSource) reportFiles(bucket *storage.BucketHandle, objs []*storage.ObjectAttrs) ([]*datasource.ReportFile, error) {
