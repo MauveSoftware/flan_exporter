@@ -13,14 +13,14 @@ const prefix = "flan_"
 var (
 	reportAgeDesc    *prometheus.Desc
 	hostsUpCountDesc *prometheus.Desc
-	portsOpenDesc    *prometheus.Desc
+	servicesDesc     *prometheus.Desc
 	vulnsDesc        *prometheus.Desc
 )
 
 func init() {
 	reportAgeDesc = prometheus.NewDesc(prefix+"report_age_seconds", "", nil, nil)
 	hostsUpCountDesc = prometheus.NewDesc(prefix+"host_count", "Number of hosts found and scanned", nil, nil)
-	portsOpenDesc = prometheus.NewDesc(prefix+"ports_open_host_count", "Number of hosts hosting servcies on this port", []string{"port", "protocol"}, nil)
+	servicesDesc = prometheus.NewDesc(prefix+"service_host_count", "Number of hosts per public available service", []string{"name", "port", "protocol"}, nil)
 	vulnsDesc = prometheus.NewDesc(prefix+"vuln_host_count", "Number of hosts affected by the CVE", []string{"cve", "cve_level", "is_exploit"}, nil)
 }
 
@@ -32,7 +32,7 @@ type collector struct {
 func (m *collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- reportAgeDesc
 	ch <- hostsUpCountDesc
-	ch <- portsOpenDesc
+	ch <- servicesDesc
 	ch <- vulnsDesc
 }
 
@@ -56,8 +56,8 @@ func (m *collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(reportAgeDesc, prometheus.GaugeValue, float64(time.Since(r.Date).Seconds()))
 	ch <- prometheus.MustNewConstMetric(hostsUpCountDesc, prometheus.GaugeValue, float64(metrics.hosts))
 
-	for port, count := range metrics.ports {
-		ch <- prometheus.MustNewConstMetric(portsOpenDesc, prometheus.GaugeValue, float64(count), port.number, port.protocol)
+	for svc, count := range metrics.services {
+		ch <- prometheus.MustNewConstMetric(servicesDesc, prometheus.GaugeValue, float64(count), svc.name, svc.port, svc.protocol)
 	}
 
 	for vuln, count := range metrics.vulns {

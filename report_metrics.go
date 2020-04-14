@@ -12,21 +12,22 @@ type vuln struct {
 	isExloit bool
 }
 
-type port struct {
-	number   string
+type service struct {
+	port     string
 	protocol string
+	name     string
 }
 
 type reportMetrics struct {
-	hosts uint32
-	ports map[port]uint32
-	vulns map[vuln]uint32
+	hosts    uint32
+	services map[service]uint32
+	vulns    map[vuln]uint32
 }
 
 func newReportMetrics() *reportMetrics {
 	return &reportMetrics{
-		ports: make(map[port]uint32),
-		vulns: make(map[vuln]uint32),
+		services: make(map[service]uint32),
+		vulns:    make(map[vuln]uint32),
 	}
 }
 
@@ -63,12 +64,16 @@ func (m *reportMetrics) processPorts(h HostResult) {
 			continue
 		}
 
-		p := port{
-			number:   po.Number,
+		svc := service{
+			port:     po.Number,
 			protocol: po.Protocol,
 		}
 
-		m.ports[p]++
+		if po.Service.Method == "probed" {
+			svc.name = po.Service.Name
+		}
+
+		m.services[svc]++
 
 		m.processVulns(po)
 	}

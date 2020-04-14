@@ -21,6 +21,10 @@ type PortResult struct {
 	State    struct {
 		State string `xml:"state,attr"`
 	} `xml:"state"`
+	Service struct {
+		Name   string `xml:"name,attr"`
+		Method string `xml:"method,attr"`
+	} `xml:"service"`
 	Script ScriptResult `xml:"script"`
 }
 
