@@ -1,3 +1,6 @@
+[![CircleCI](https://circleci.com/gh/MauveSoftware/flan_exporter.svg?style=shield)](https://circleci.com/gh/MauveSoftware/flan_exporter)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mauvesoftware/flan_exporter)](https://goreportcard.com/report/github.com/mauvesoftware/flan_exporter)
+
 # flan_exporter
 Metrics exporter for Cloudflares Flan Scan vulnerability / network scanner
 
