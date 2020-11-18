@@ -1,6 +1,6 @@
 [![CircleCI](https://circleci.com/gh/MauveSoftware/flan_exporter.svg?style=shield)](https://circleci.com/gh/MauveSoftware/flan_exporter)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mauvesoftware/flan_exporter)](https://goreportcard.com/report/github.com/mauvesoftware/flan_exporter)
-[![Docker Build Statu](https://img.shields.io/docker/build/mauvesoftware/flan_exporter.svg)](https://hub.docker.com/r/mauvesoftware/flan_exporter/builds)
+[![Docker Build Statu](https://img.shields.io/docker/build/MauveSoftware/flan_exporter.svg)](https://hub.docker.com/r/MauveSoftware/flan_exporter/builds)
 
 # flan_exporter
 Metrics exporter for Cloudflares Flan Scan vulnerability / network scanner
