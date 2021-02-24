@@ -57,8 +57,14 @@ func (m *collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(hostsUpCountDesc, prometheus.GaugeValue, float64(metrics.hosts))
 
 	for svc, hosts := range metrics.services {
+		m := make(map[host]bool)
 		for _, h := range hosts {
+			if _, exists := m[h]; exists {
+				continue
+			}
+
 			ch <- prometheus.MustNewConstMetric(servicesDesc, prometheus.GaugeValue, 1, svc.name, svc.port, svc.protocol, h.addr, h.name)
+			m[h] = true
 		}
 	}
 
@@ -68,8 +74,14 @@ func (m *collector) Collect(ch chan<- prometheus.Metric) {
 			exploit = "1"
 		}
 
+		m := make(map[host]bool)
 		for _, h := range hosts {
+			if _, exists := m[h]; exists {
+				continue
+			}
+
 			ch <- prometheus.MustNewConstMetric(servicesDesc, prometheus.GaugeValue, 1, vuln.cve, vuln.level, exploit, h.addr, h.name)
+			m[h] = true
 		}
 	}
 }
