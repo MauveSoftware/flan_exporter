@@ -80,7 +80,7 @@ func (m *collector) Collect(ch chan<- prometheus.Metric) {
 				continue
 			}
 
-			ch <- prometheus.MustNewConstMetric(servicesDesc, prometheus.GaugeValue, 1, vuln.cve, vuln.level, exploit, h.addr, h.name)
+			ch <- prometheus.MustNewConstMetric(vulnsDesc, prometheus.GaugeValue, 1, vuln.cve, vuln.level, exploit, h.addr, h.name)
 			m[h] = true
 		}
 	}
