@@ -5,6 +5,14 @@ type NmapRun struct {
 }
 
 type HostResult struct {
+	Address struct {
+		Addr string `xml:"addr,attr"`
+	} `xml:"address"`
+	HostNames struct {
+		Names []struct {
+			Name string `xml:"name,attr"`
+		} `xml:"hostname"`
+	} `xml:"hostnames"`
 	Ports  PortsResult `xml:"ports"`
 	Status struct {
 		State string `xml:"state,attr"`

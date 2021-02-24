@@ -20,8 +20,8 @@ var (
 func init() {
 	reportAgeDesc = prometheus.NewDesc(prefix+"report_age_seconds", "", nil, nil)
 	hostsUpCountDesc = prometheus.NewDesc(prefix+"host_count", "Number of hosts found and scanned", nil, nil)
-	servicesDesc = prometheus.NewDesc(prefix+"service_host_count", "Number of hosts per public available service", []string{"name", "port", "protocol"}, nil)
-	vulnsDesc = prometheus.NewDesc(prefix+"vuln_host_count", "Number of hosts affected by the CVE", []string{"cve", "cve_level", "is_exploit"}, nil)
+	servicesDesc = prometheus.NewDesc(prefix+"host_service", "Number of hosts per public available service", []string{"name", "port", "protocol", "host_addr", "host_name"}, nil)
+	vulnsDesc = prometheus.NewDesc(prefix+"host_vuln", "Number of hosts affected by the CVE", []string{"cve", "cve_level", "is_exploit", "host_addr", "host_name"}, nil)
 }
 
 type collector struct {
@@ -56,16 +56,20 @@ func (m *collector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(reportAgeDesc, prometheus.GaugeValue, float64(time.Since(r.Date).Seconds()))
 	ch <- prometheus.MustNewConstMetric(hostsUpCountDesc, prometheus.GaugeValue, float64(metrics.hosts))
 
-	for svc, count := range metrics.services {
-		ch <- prometheus.MustNewConstMetric(servicesDesc, prometheus.GaugeValue, float64(count), svc.name, svc.port, svc.protocol)
+	for svc, hosts := range metrics.services {
+		for _, h := range hosts {
+			ch <- prometheus.MustNewConstMetric(servicesDesc, prometheus.GaugeValue, 1, svc.name, svc.port, svc.protocol, h.addr, h.name)
+		}
 	}
 
-	for vuln, count := range metrics.vulns {
+	for vuln, hosts := range metrics.vulns {
 		exploit := "0"
 		if vuln.isExloit {
 			exploit = "1"
 		}
 
-		ch <- prometheus.MustNewConstMetric(vulnsDesc, prometheus.GaugeValue, float64(count), vuln.cve, vuln.level, exploit)
+		for _, h := range hosts {
+			ch <- prometheus.MustNewConstMetric(servicesDesc, prometheus.GaugeValue, 1, vuln.cve, vuln.level, exploit, h.addr, h.name)
+		}
 	}
 }

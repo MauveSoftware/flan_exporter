@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/xml"
+	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -18,16 +19,21 @@ type service struct {
 	name     string
 }
 
+type host struct {
+	name string
+	addr string
+}
+
 type reportMetrics struct {
 	hosts    uint32
-	services map[service]uint32
-	vulns    map[vuln]uint32
+	services map[service][]host
+	vulns    map[vuln][]host
 }
 
 func newReportMetrics() *reportMetrics {
 	return &reportMetrics{
-		services: make(map[service]uint32),
-		vulns:    make(map[vuln]uint32),
+		services: make(map[service][]host),
+		vulns:    make(map[vuln][]host),
 	}
 }
 
@@ -54,11 +60,21 @@ func (m *reportMetrics) processHosts(run *NmapRun) {
 		}
 
 		m.hosts++
-		m.processPorts(h)
+
+		fmt.Println(h)
+		ho := host{
+			addr: h.Address.Addr,
+		}
+
+		if len(h.HostNames.Names) > 0 {
+			ho.name = h.HostNames.Names[0].Name
+		}
+
+		m.processPorts(h, ho)
 	}
 }
 
-func (m *reportMetrics) processPorts(h HostResult) {
+func (m *reportMetrics) processPorts(h HostResult, ho host) {
 	for _, po := range h.Ports.Ports {
 		if po.State.State != "open" {
 			continue
@@ -73,23 +89,24 @@ func (m *reportMetrics) processPorts(h HostResult) {
 			svc.name = po.Service.Name
 		}
 
-		m.services[svc]++
+		m.services[svc] = append(m.services[svc], ho)
 
-		m.processVulns(po)
+		m.processVulns(po, ho)
 	}
 }
 
-func (m *reportMetrics) processVulns(p PortResult) {
+func (m *reportMetrics) processVulns(p PortResult, ho host) {
 	if p.Script.ID != "vulners" {
 		return
 	}
 
 	for _, t := range p.Script.Table.Tables {
-		m.processVuln(t)
+		v := m.vulnFromTable(t)
+		m.vulns[v] = append(m.vulns[v], ho)
 	}
 }
 
-func (m *reportMetrics) processVuln(t Table) {
+func (m *reportMetrics) vulnFromTable(t Table) vuln {
 	vuln := vuln{}
 
 	for _, elem := range t.Elements {
@@ -108,5 +125,5 @@ func (m *reportMetrics) processVuln(t Table) {
 		}
 	}
 
-	m.vulns[vuln]++
+	return vuln
 }
