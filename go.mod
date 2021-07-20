@@ -1,11 +1,11 @@
 module github.com/MauveSoftware/flan_exporter
 
-go 1.14
+go 1.16
 
 require (
-	cloud.google.com/go/storage v1.6.0
+	cloud.google.com/go/storage v1.16.0
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.5.1
-	github.com/sirupsen/logrus v1.5.0
-	google.golang.org/api v0.21.0
+	github.com/prometheus/client_golang v1.11.0
+	github.com/sirupsen/logrus v1.8.1
+	google.golang.org/api v0.50.0
 )
