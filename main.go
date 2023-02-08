@@ -16,7 +16,7 @@ import (
 	"github.com/MauveSoftware/flan_exporter/datasource/gcloud"
 )
 
-const version string = "0.2.2"
+const version string = "0.2.3"
 
 var (
 	showVersion           = flag.Bool("version", false, "Print version information.")
@@ -26,6 +26,9 @@ var (
 	fsPath                = flag.String("datasource.fs.report-path", "", "Path to report files")
 	gcloudCredentialsFile = flag.String("datasource.gcloud.credentials-path", "", "Path to Google Cloud Credentials JSON file")
 	gcloudBucketName      = flag.String("datasource.gcloud.bucket-name", "flan-reports", "Name ")
+	tlsEnabled            = flag.Bool("tls.enabled", false, "Enables TLS")
+	tlsCertChainPath      = flag.String("tls.cert-file", "", "Path to TLS cert file")
+	tlsKeyPath            = flag.String("tls.key-file", "", "Path to TLS key file")
 )
 
 func main() {
@@ -71,7 +74,12 @@ func startServer() {
 	prometheus.MustRegister(c)
 	http.Handle("/metrics", promhttp.Handler())
 
-	logrus.Infof("Listening for %s on %s", *metricsPath, *listenAddress)
+	logrus.Infof("Listening for %s on %s (TLS: %v)", *metricsPath, *listenAddress, *tlsEnabled)
+	if *tlsEnabled {
+		logrus.Fatal(http.ListenAndServeTLS(*listenAddress, *tlsCertChainPath, *tlsKeyPath, nil))
+		return
+	}
+
 	logrus.Fatal(http.ListenAndServe(*listenAddress, nil))
 }
 
