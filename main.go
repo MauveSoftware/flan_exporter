@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,7 +21,13 @@ import (
 	"github.com/MauveSoftware/flan_exporter/datasource/gcloud"
 )
 
-const version string = "0.2.4"
+const version string = "0.2.5"
+
+const (
+	readTimeout  = 10 * time.Second
+	writeTimeout = 30 * time.Second
+	idleTimeout  = 60 * time.Second
+)
 
 var (
 	showVersion           = flag.Bool("version", false, "Print version information.")
@@ -62,7 +69,7 @@ func startServer() {
 
 	logrus.Infof("Starting Cloudflare Flan Scan exporter (Version: %s)", version)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`<html>
+		if _, err := w.Write([]byte(`<html>
 			<head><title>Flan Scan Result Exporter (Version ` + version + `)</title></head>
 			<body>
 			<h1>Senderscore Exporter by Mauve Mailorder Software</h1>
@@ -71,20 +78,29 @@ func startServer() {
 			<h2>More information</h2>
 			<p><a href="https://github.com/MauveSoftware/flan_exporter">github.com/MauveSoftware/flan_exporter</a></p>
 			</body>
-			</html>`))
+			</html>`)); err != nil {
+			logrus.Errorf("could not write response: %v", err)
+		}
 	})
 
 	c := &collector{dataSource: ds}
 	prometheus.MustRegister(c)
 	http.Handle("/metrics", promhttp.Handler())
 
+	srv := &http.Server{
+		Addr:         *listenAddress,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
+	}
+
 	logrus.Infof("Listening for %s on %s (TLS: %v)", *metricsPath, *listenAddress, *tlsEnabled)
 	if *tlsEnabled {
-		logrus.Fatal(http.ListenAndServeTLS(*listenAddress, *tlsCertChainPath, *tlsKeyPath, nil))
+		logrus.Fatal(srv.ListenAndServeTLS(*tlsCertChainPath, *tlsKeyPath))
 		return
 	}
 
-	logrus.Fatal(http.ListenAndServe(*listenAddress, nil))
+	logrus.Fatal(srv.ListenAndServe())
 }
 
 func datasourceProvider() (datasource.DataSource, error) {

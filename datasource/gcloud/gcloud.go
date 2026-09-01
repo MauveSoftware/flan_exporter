@@ -6,7 +6,7 @@ package gcloud
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"strings"
 	"sync"
 	"time"
@@ -14,6 +14,7 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/MauveSoftware/flan_exporter/datasource"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
@@ -29,7 +30,7 @@ type gcloudDataSource struct {
 // New returns a datasource implementation using Google Cloud Storage
 func New(bucketName, credentialsFile string) (datasource.DataSource, error) {
 	ctx := context.Background()
-	client, err := storage.NewClient(ctx, option.WithCredentialsFile(credentialsFile))
+	client, err := storage.NewClient(ctx, option.WithAuthCredentialsFile(option.ServiceAccount, credentialsFile))
 	if err != nil {
 		return nil, errors.Wrap(err, "could not create storage client for Google Cloud Storage")
 	}
@@ -94,7 +95,7 @@ func (d *gcloudDataSource) newestReportFromObjects(bucket *storage.BucketHandle,
 	d.cachedMutex.Lock()
 	defer d.cachedMutex.Unlock()
 
-	if d.cached != nil && d.cached.Date == newestDate {
+	if d.cached != nil && d.cached.Date.Equal(newestDate) {
 		return d.cached, nil
 	}
 
@@ -152,9 +153,13 @@ func (d *gcloudDataSource) reportFileFromObject(bucket *storage.BucketHandle, ob
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
+	defer func() {
+		if cerr := r.Close(); cerr != nil {
+			logrus.Warnf("could not close reader for object %s: %v", obj.Name, cerr)
+		}
+	}()
 
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}

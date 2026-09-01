@@ -7,8 +7,6 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 type vuln struct {
@@ -46,10 +44,6 @@ func (m *reportMetrics) parseReportXML(b []byte) error {
 	err := xml.Unmarshal(b, r)
 	if err != nil {
 		return err
-	}
-
-	if r == nil {
-		return errors.Errorf("no NMAP run was found")
 	}
 
 	m.processHosts(r)
@@ -117,15 +111,12 @@ func (m *reportMetrics) vulnFromTable(t Table) vuln {
 		switch elem.Key {
 		case "id":
 			vuln.cve = elem.Text
-			break
 		case "cvss":
 			vuln.level = elem.Text
-			break
 		case "is_exploit":
 			if elem.Text == "true" {
 				vuln.isExloit = true
 			}
-			break
 		}
 	}
 

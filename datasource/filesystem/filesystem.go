@@ -5,7 +5,6 @@
 package filesystem
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,7 +24,7 @@ func New(directory string) datasource.DataSource {
 }
 
 func (d *filesystemDataSource) NewestReport() (*datasource.Report, error) {
-	fs, err := ioutil.ReadDir(d.directory)
+	fs, err := os.ReadDir(d.directory)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not list reports directory")
 	}
@@ -46,8 +45,8 @@ func (d *filesystemDataSource) NewestReport() (*datasource.Report, error) {
 	}, nil
 }
 
-func (d *filesystemDataSource) newestReport(fs []os.FileInfo) (date time.Time, dir os.FileInfo) {
-	var newest os.FileInfo
+func (d *filesystemDataSource) newestReport(fs []os.DirEntry) (date time.Time, dir os.DirEntry) {
+	var newest os.DirEntry
 	var newestTime time.Time
 
 	for _, fi := range fs {
@@ -69,9 +68,9 @@ func (d *filesystemDataSource) newestReport(fs []os.FileInfo) (date time.Time, d
 	return newestTime, newest
 }
 
-func (d *filesystemDataSource) filesFromDir(dir os.FileInfo) ([]*datasource.ReportFile, error) {
+func (d *filesystemDataSource) filesFromDir(dir os.DirEntry) ([]*datasource.ReportFile, error) {
 	p := filepath.Join(d.directory, dir.Name())
-	fs, err := ioutil.ReadDir(p)
+	fs, err := os.ReadDir(p)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not list directory %s", dir.Name())
 	}
@@ -93,10 +92,11 @@ func (d *filesystemDataSource) filesFromDir(dir os.FileInfo) ([]*datasource.Repo
 	return files, nil
 }
 
-func (d *filesystemDataSource) fileFromInfo(dirInfo, fileInfo os.FileInfo) (*datasource.ReportFile, error) {
+func (d *filesystemDataSource) fileFromInfo(dirInfo, fileInfo os.DirEntry) (*datasource.ReportFile, error) {
 	p := filepath.Join(d.directory, dirInfo.Name(), fileInfo.Name())
 
-	b, err := ioutil.ReadFile(p)
+	// path is built from the configured report directory and its own listing, not external input
+	b, err := os.ReadFile(p) // #nosec G304
 	if err != nil {
 		return nil, errors.Errorf("could not read xml report file %s", fileInfo.Name())
 	}
