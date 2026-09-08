@@ -7,7 +7,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.24.1
 	github.com/sirupsen/logrus v1.10.2
-	google.golang.org/api v0.296.0
+	google.golang.org/api v0.297.0
 )
 
 require (
