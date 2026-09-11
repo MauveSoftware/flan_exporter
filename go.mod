@@ -3,7 +3,7 @@ module github.com/MauveSoftware/flan_exporter
 go 1.26.6
 
 require (
-	cloud.google.com/go/storage v1.67.0
+	cloud.google.com/go/storage v1.67.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.24.1
 	github.com/sirupsen/logrus v1.10.2
