@@ -21,7 +21,7 @@ import (
 	"github.com/MauveSoftware/flan_exporter/datasource/gcloud"
 )
 
-const version string = "0.2.5"
+const version string = "0.2.6"
 
 const (
 	readTimeout  = 10 * time.Second
